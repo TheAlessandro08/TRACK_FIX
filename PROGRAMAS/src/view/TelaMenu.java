@@ -3,11 +3,18 @@ package view;
 import controller.AssistenciaFacade;
 import controller.SistemaObserver;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,7 +23,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import model.OrdemServico;
 import model.Peca;
 import model.Usuario;
@@ -29,6 +38,25 @@ public class TelaMenu extends JFrame implements SistemaObserver {
     private final AssistenciaFacade facade = AssistenciaFacade.getInstance();
     private final JLabel lblResumoOS;
     private final JLabel lblResumoEstoque;
+    private final JPanel cardEstoque;
+
+    // Paleta de cores TRACK FIX (alinhada com a TelaLogin)
+    private static final Color COR_HEADER_BG = new Color(30, 41, 59);     // #1E293B
+    private static final Color COR_PRIMARIA = new Color(37, 99, 235);     // #2563EB
+    private static final Color COR_FUNDO = new Color(248, 250, 252);      // #F8FAFC
+    private static final Color COR_CARD = Color.WHITE;
+    private static final Color COR_TEXTO = new Color(30, 41, 59);
+    private static final Color COR_SUBTEXTO = new Color(100, 116, 139);
+    private static final Color COR_BORDA = new Color(203, 213, 225);
+
+    // Cores dinâmicas para o indicador de estoque
+    private static final Color COR_OK_BG = new Color(240, 253, 244);
+    private static final Color COR_OK_BORDA = new Color(134, 239, 172);
+    private static final Color COR_OK_TEXTO = new Color(21, 128, 61);
+
+    private static final Color COR_ALERTA_BG = new Color(254, 242, 242);
+    private static final Color COR_ALERTA_BORDA = new Color(252, 165, 165);
+    private static final Color COR_ALERTA_TEXTO = new Color(185, 28, 28);
 
     public TelaMenu(Usuario usuario) {
         this.usuario = usuario != null ? usuario : facade.getUsuarioLogado();
@@ -37,17 +65,23 @@ public class TelaMenu extends JFrame implements SistemaObserver {
         facade.adicionarObserver(this);
 
         String nomeExibicao = this.usuario != null ? this.usuario.getLogin() : "Operador";
-        setTitle("AssistOS - Menu Principal (" + nomeExibicao + ")");
-        setSize(520, 340);
+        boolean isAdmin = this.usuario != null && "A".equalsIgnoreCase(this.usuario.getTipo());
+        String perfilTexto = isAdmin ? "Administrador" : "Técnico / Operador";
+
+        setTitle("TRACK FIX - Menu Principal (" + nomeExibicao + ")");
+        setSize(760, 470);
+        setMinimumSize(new Dimension(680, 430));
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        JPanel painelPrincipal = new JPanel(new BorderLayout(12, 12));
-        painelPrincipal.setBorder(new EmptyBorder(15, 15, 15, 15));
-        setContentPane(painelPrincipal);
+        JPanel painelRaiz = new JPanel(new BorderLayout());
+        painelRaiz.setBackground(COR_FUNDO);
+        setContentPane(painelRaiz);
 
-        // === BARRA DE MENU ===
+        // === BARRA DE MENU SUPERIOR ===
         JMenuBar menuBar = new JMenuBar();
+        menuBar.setBackground(Color.WHITE);
+        menuBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COR_BORDA));
 
         JMenu menuOperacoes = new JMenu("Operações");
         JMenuItem itemOS = new JMenuItem("Ordens de Serviço");
@@ -62,7 +96,6 @@ public class TelaMenu extends JFrame implements SistemaObserver {
         menuCadastro.add(itemUsuarios);
 
         // Restringe cadastro de usuários apenas para administradores ("A")
-        boolean isAdmin = this.usuario != null && "A".equalsIgnoreCase(this.usuario.getTipo());
         itemUsuarios.setEnabled(isAdmin);
 
         JMenu menuSair = new JMenu("Sair");
@@ -74,32 +107,137 @@ public class TelaMenu extends JFrame implements SistemaObserver {
         menuBar.add(menuSair);
         setJMenuBar(menuBar);
 
-        // === TOPO: Saudação ===
-        JLabel lblSaudacao = new JLabel("Bem-vindo, " + nomeExibicao + "!", SwingConstants.CENTER);
-        lblSaudacao.setFont(new Font("Arial", Font.BOLD, 18));
-        painelPrincipal.add(lblSaudacao, BorderLayout.NORTH);
+        // === CABEÇALHO TRACK FIX ===
+        JPanel painelHeader = new JPanel(new BorderLayout(15, 0));
+        painelHeader.setBackground(COR_HEADER_BG);
+        painelHeader.setBorder(new EmptyBorder(18, 28, 18, 28));
 
-        // === CENTRO: Atalhos rápidos e indicadores ao vivo ===
-        JPanel painelCentro = new JPanel(new GridLayout(3, 1, 10, 10));
+        JPanel painelMarca = new JPanel(new GridLayout(2, 1, 0, 2));
+        painelMarca.setOpaque(false);
 
-        JPanel painelAtalhos = new JPanel(new GridLayout(1, 3, 10, 10));
+        JLabel lblLogo = new JLabel(
+            "<html><span style='color:#FFFFFF; font-size:20px; font-weight:bold; letter-spacing:1px;'>TRACK </span>" +
+            "<span style='color:#38BDF8; font-size:20px; font-weight:bold; letter-spacing:1px;'>FIX</span></html>"
+        );
+        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 24));
+
+        JLabel lblSubtitulo = new JLabel("Painel de Controle da Assistência Técnica");
+        lblSubtitulo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblSubtitulo.setForeground(new Color(203, 213, 225));
+
+        painelMarca.add(lblLogo);
+        painelMarca.add(lblSubtitulo);
+
+        JPanel painelUsuario = new JPanel(new GridLayout(2, 1, 0, 2));
+        painelUsuario.setOpaque(false);
+
+        JLabel lblSaudacao = new JLabel("Bem-vindo, " + nomeExibicao, SwingConstants.RIGHT);
+        lblSaudacao.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblSaudacao.setForeground(Color.WHITE);
+
+        JLabel lblPerfil = new JLabel("Perfil: " + perfilTexto, SwingConstants.RIGHT);
+        lblPerfil.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lblPerfil.setForeground(new Color(56, 189, 248));
+
+        painelUsuario.add(lblSaudacao);
+        painelUsuario.add(lblPerfil);
+
+        painelHeader.add(painelMarca, BorderLayout.WEST);
+        painelHeader.add(painelUsuario, BorderLayout.EAST);
+        painelRaiz.add(painelHeader, BorderLayout.NORTH);
+
+        // === ÁREA CENTRAL: ATALHOS RÁPIDOS E INDICADORES AO VIVO ===
+        JPanel painelConteudo = new JPanel(new GridBagLayout());
+        painelConteudo.setBackground(COR_FUNDO);
+        painelConteudo.setBorder(new EmptyBorder(24, 28, 28, 28));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+
+        // Título da seção de atalhos
+        JLabel lblSecaoAtalhos = new JLabel("Acesso Rápido");
+        lblSecaoAtalhos.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblSecaoAtalhos.setForeground(COR_TEXTO);
+
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 12, 0);
+        painelConteudo.add(lblSecaoAtalhos, gbc);
+
+        // Grade de botões de atalho
+        JPanel painelAtalhos = new JPanel(new GridLayout(1, 4, 12, 0));
+        painelAtalhos.setBackground(COR_FUNDO);
+
         JButton btnAtalhoOS = new JButton("Ordens de Serviço");
+        estilizarBotaoPrimario(btnAtalhoOS);
+
         JButton btnAtalhoPecas = new JButton("Estoque de Peças");
+        estilizarBotaoCard(btnAtalhoPecas);
+
         JButton btnAtalhoClientes = new JButton("Clientes");
+        estilizarBotaoCard(btnAtalhoClientes);
+
+        JButton btnAtalhoUsuarios = new JButton("Usuários");
+        estilizarBotaoCard(btnAtalhoUsuarios);
+        btnAtalhoUsuarios.setEnabled(isAdmin);
+
         painelAtalhos.add(btnAtalhoOS);
         painelAtalhos.add(btnAtalhoPecas);
         painelAtalhos.add(btnAtalhoClientes);
+        painelAtalhos.add(btnAtalhoUsuarios);
 
-        lblResumoOS = new JLabel("", SwingConstants.CENTER);
-        lblResumoOS.setFont(new Font("Arial", Font.PLAIN, 14));
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 26, 0);
+        painelConteudo.add(painelAtalhos, gbc);
 
-        lblResumoEstoque = new JLabel("", SwingConstants.CENTER);
-        lblResumoEstoque.setFont(new Font("Arial", Font.BOLD, 13));
+        // Título da seção de indicadores
+        JLabel lblSecaoIndicadores = new JLabel("Indicadores em Tempo Real");
+        lblSecaoIndicadores.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        lblSecaoIndicadores.setForeground(COR_TEXTO);
 
-        painelCentro.add(painelAtalhos);
-        painelCentro.add(lblResumoOS);
-        painelCentro.add(lblResumoEstoque);
-        painelPrincipal.add(painelCentro, BorderLayout.CENTER);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 12, 0);
+        painelConteudo.add(lblSecaoIndicadores, gbc);
+
+        // Painel de cartões de resumo (Observer)
+        JPanel painelIndicadores = new JPanel(new GridLayout(2, 1, 0, 12));
+        painelIndicadores.setBackground(COR_FUNDO);
+
+        JPanel cardOS = new JPanel(new BorderLayout());
+        cardOS.setBackground(COR_CARD);
+        cardOS.setBorder(new CompoundBorder(
+            new LineBorder(COR_BORDA, 1, true),
+            new EmptyBorder(14, 18, 14, 18)
+        ));
+
+        lblResumoOS = new JLabel("", SwingConstants.LEFT);
+        lblResumoOS.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblResumoOS.setForeground(COR_TEXTO);
+        cardOS.add(lblResumoOS, BorderLayout.CENTER);
+
+        cardEstoque = new JPanel(new BorderLayout());
+        cardEstoque.setBackground(COR_OK_BG);
+        cardEstoque.setBorder(new CompoundBorder(
+            new LineBorder(COR_OK_BORDA, 1, true),
+            new EmptyBorder(14, 18, 14, 18)
+        ));
+
+        lblResumoEstoque = new JLabel("", SwingConstants.LEFT);
+        lblResumoEstoque.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblResumoEstoque.setForeground(COR_OK_TEXTO);
+        cardEstoque.add(lblResumoEstoque, BorderLayout.CENTER);
+
+        painelIndicadores.add(cardOS);
+        painelIndicadores.add(cardEstoque);
+
+        gbc.gridy = 3;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        painelConteudo.add(painelIndicadores, gbc);
+
+        painelRaiz.add(painelConteudo, BorderLayout.CENTER);
 
         // === EVENTOS DE NAVEGAÇÃO ===
         itemOS.addActionListener(e -> new CRUDOrdemServico());
@@ -112,6 +250,7 @@ public class TelaMenu extends JFrame implements SistemaObserver {
         btnAtalhoClientes.addActionListener(e -> new CRUDCliente());
 
         itemUsuarios.addActionListener(e -> new CRUDUsuario());
+        btnAtalhoUsuarios.addActionListener(e -> new CRUDUsuario());
 
         itemLogout.addActionListener(e -> {
             facade.logout(); // Limpa sessão e observadores
@@ -130,6 +269,28 @@ public class TelaMenu extends JFrame implements SistemaObserver {
         atualizarIndicadores();
     }
 
+    private void estilizarBotaoPrimario(JButton botao) {
+        botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        botao.setBackground(COR_PRIMARIA);
+        botao.setForeground(Color.WHITE);
+        botao.setPreferredSize(new Dimension(150, 52));
+        botao.setFocusPainted(false);
+        botao.setBorderPainted(false);
+        botao.setOpaque(true);
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+
+    private void estilizarBotaoCard(JButton botao) {
+        botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        botao.setBackground(COR_CARD);
+        botao.setForeground(COR_TEXTO);
+        botao.setPreferredSize(new Dimension(150, 52));
+        botao.setFocusPainted(false);
+        botao.setBorder(new LineBorder(COR_BORDA, 1, true));
+        botao.setOpaque(true);
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+
     // Recalcula contadores de OSs ativas e peças em estoque crítico
     private void atualizarIndicadores() {
         List<OrdemServico> listaOS = facade.listarOrdensServico();
@@ -138,15 +299,30 @@ public class TelaMenu extends JFrame implements SistemaObserver {
                            && !"ENTREGUE".equalsIgnoreCase(os.getStatus())
                            && !"CANCELADA".equalsIgnoreCase(os.getStatus()))
                 .count();
-        lblResumoOS.setText("Ordens de Serviço em andamento: " + osAbertas + " (Total: " + listaOS.size() + ")");
+        lblResumoOS.setText("Ordens de Serviço em andamento: " + osAbertas + "  (Total registradas: " + listaOS.size() + ")");
 
         List<Peca> pecas = facade.listarPecas();
         long estoqueBaixo = pecas.stream()
                 .filter(p -> p.getQuantidadeEstoque() <= p.getEstoqueMinimo())
                 .count();
-        lblResumoEstoque.setText(estoqueBaixo > 0
-                ? "Alerta: " + estoqueBaixo + " peça(s) com estoque mínimo ou zerado!"
-                : "Estoque de peças regular (" + pecas.size() + " itens cadastrados).");
+
+        if (estoqueBaixo > 0) {
+            cardEstoque.setBackground(COR_ALERTA_BG);
+            cardEstoque.setBorder(new CompoundBorder(
+                new LineBorder(COR_ALERTA_BORDA, 1, true),
+                new EmptyBorder(14, 18, 14, 18)
+            ));
+            lblResumoEstoque.setForeground(COR_ALERTA_TEXTO);
+            lblResumoEstoque.setText("Alerta de Estoque: " + estoqueBaixo + " peça(s) no nível mínimo ou zerado!");
+        } else {
+            cardEstoque.setBackground(COR_OK_BG);
+            cardEstoque.setBorder(new CompoundBorder(
+                new LineBorder(COR_OK_BORDA, 1, true),
+                new EmptyBorder(14, 18, 14, 18)
+            ));
+            lblResumoEstoque.setForeground(COR_OK_TEXTO);
+            lblResumoEstoque.setText("Estoque de peças regular  (" + pecas.size() + " itens cadastrados)");
+        }
     }
 
     // === MÉTODOS DO PADRÃO OBSERVER ===
