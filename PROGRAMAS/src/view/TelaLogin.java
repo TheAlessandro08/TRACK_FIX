@@ -15,7 +15,7 @@ public class TelaLogin extends JFrame {
     private JTextField txtUsuario;
     private JPasswordField txtSenha;
     private JButton btnEntrar;
-    private JButton btnCadastrar;
+    private JButton btnSolicitarAcesso;
 
     // Paleta de cores do TRACK FIX
     private static final Color COR_BRAND_BG = new Color(30, 41, 59);      // Azul-marinho escuro (#1E293B)
@@ -125,11 +125,11 @@ public class TelaLogin extends JFrame {
         btnEntrar = new JButton("Entrar");
         estilizarBotaoPrimario(btnEntrar);
 
-        btnCadastrar = new JButton("Cadastrar");
-        estilizarBotaoSecundario(btnCadastrar);
+        btnSolicitarAcesso = new JButton("Solicitar Acesso");
+        estilizarBotaoSecundario(btnSolicitarAcesso);
 
         painelBotoes.add(btnEntrar);
-        painelBotoes.add(btnCadastrar);
+        painelBotoes.add(btnSolicitarAcesso);
 
         // Montagem vertical do formulário
         gbc.gridy = 0;
@@ -191,10 +191,10 @@ public class TelaLogin extends JFrame {
     }
 
     private void estilizarBotaoSecundario(JButton botao) {
-        botao.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        botao.setFont(new Font("Segoe UI", Font.BOLD, 13));
         botao.setBackground(new Color(241, 245, 249));
         botao.setForeground(COR_TEXTO);
-        botao.setPreferredSize(new Dimension(130, 40));
+        botao.setPreferredSize(new Dimension(145, 40));
         botao.setFocusPainted(false);
         botao.setBorder(new LineBorder(COR_BORDA, 1, true));
         botao.setOpaque(true);
@@ -203,7 +203,7 @@ public class TelaLogin extends JFrame {
 
     private void configurarEventos() {
         btnEntrar.addActionListener(e -> realizarLogin());
-        btnCadastrar.addActionListener(e -> realizarCadastro());
+        btnSolicitarAcesso.addActionListener(e -> solicitarAcesso());
     }
 
     private void realizarLogin() {
@@ -219,28 +219,55 @@ public class TelaLogin extends JFrame {
             dispose();
             new TelaMenu(facade.getUsuarioLogado()).setVisible(true);
         } else {
-            JOptionPane.showMessageDialog(this, "Usuário ou senha inválidos (ou inativo).", "Erro de Acesso", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Usuário ou senha inválidos, ou cadastro ainda aguardando aprovação do administrador.",
+                "Acesso Negado",
+                JOptionPane.ERROR_MESSAGE
+            );
             txtSenha.setText("");
             txtSenha.requestFocus();
         }
     }
 
-    private void realizarCadastro() {
+    private void solicitarAcesso() {
         String login = txtUsuario.getText().trim();
         String senha = new String(txtSenha.getPassword());
 
         if (login.isEmpty() || senha.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Informe o novo usuário e senha nos campos acima para cadastrar.", "Cadastro", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Preencha o usuário e a senha desejados nos campos acima antes de solicitar acesso.",
+                "Solicitar Acesso",
+                JOptionPane.INFORMATION_MESSAGE
+            );
             return;
         }
 
-        ResultadoCadastro resultado = facade.cadastrarUsuario(login, senha);
+        ResultadoCadastro resultado = facade.solicitarAcesso(login, senha);
         if (resultado == ResultadoCadastro.SUCESSO) {
-            JOptionPane.showMessageDialog(this, "Usuário cadastrado com sucesso! Agora clique em Entrar.", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Solicitação enviada com sucesso!\nAguarde um administrador ativar o seu usuário para entrar no sistema.",
+                "Aguardando Aprovação",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            txtUsuario.setText("");
+            txtSenha.setText("");
         } else if (resultado == ResultadoCadastro.JA_EXISTE) {
-            JOptionPane.showMessageDialog(this, "Este nome de usuário já está em uso.", "Aviso", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Este nome de usuário já está cadastrado ou possui uma solicitação pendente.",
+                "Usuário Indisponível",
+                JOptionPane.WARNING_MESSAGE
+            );
         } else {
-            JOptionPane.showMessageDialog(this, "Erro ao conectar com o banco de dados.", "Erro", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "Erro ao registrar solicitação no banco de dados.",
+                "Erro",
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 }
