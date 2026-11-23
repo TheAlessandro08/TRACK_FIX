@@ -9,9 +9,9 @@ import util.ResultadoCadastro;
 // Responsável pela persistência e autenticação de usuários e técnicos no banco.
 public class UsuarioDAO {
 
-    // Busca o usuário combinando login e o hash SHA-256 da senha
+    // Busca o usuário combinando login, hash SHA-256 da senha e status ativo ('T')
     public Usuario autenticar(String login, String senhaHash) {
-        String sql = "SELECT * FROM usuarios WHERE login = ? AND senha = ?";
+        String sql = "SELECT * FROM usuarios WHERE login = ? AND senha = ? AND ativo = 'T'";
 
         try (Connection conn = Conexao.conectar();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
