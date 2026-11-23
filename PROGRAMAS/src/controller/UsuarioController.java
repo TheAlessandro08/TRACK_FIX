@@ -39,7 +39,22 @@ public class UsuarioController {
         return null;
     }
 
-    // Cadastro simplificado (usado pela TelaLogin): define perfil padrão "U" e ativo "T".
+    // Pré-cadastro pela TelaLogin: cria perfil padrão "U" com ativo "F" (aguardando aprovação).
+    public ResultadoCadastro solicitarAcesso(String login, String senha) {
+        if (login == null || login.trim().isEmpty() || senha == null || senha.trim().isEmpty()) {
+            return ResultadoCadastro.ERRO_BANCO;
+        }
+
+        Usuario novo = new Usuario();
+        novo.setLogin(login.trim());
+        novo.setSenha(gerarHashSHA256(senha.trim()));
+        novo.setTipo("U");
+        novo.setAtivo("F");
+
+        return usuarioDAO.inserir(novo);
+    }
+
+    // Cadastro direto com ativação imediata ("T").
     public ResultadoCadastro cadastrar(String login, String senha) {
         if (login == null || login.trim().isEmpty() || senha == null || senha.trim().isEmpty()) {
             return ResultadoCadastro.ERRO_BANCO;

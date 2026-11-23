@@ -99,6 +99,10 @@ public class AssistenciaFacade {
         return usuarioLogado;
     }
 
+    public ResultadoCadastro solicitarAcesso(String login, String senha) {
+        return usuarioController.solicitarAcesso(login, senha);
+    }
+
     public ResultadoCadastro cadastrarUsuario(String login, String senha) {
         return usuarioController.cadastrar(login, senha);
     }
